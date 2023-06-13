@@ -45,19 +45,19 @@
       <v-spacer />
       <v-row v-if="loginuser">
         <v-col>
-          <v-autocomplete
+          <v-text-field
           v-model="nameSearch"
-          :autosearch="autosearch"
-          :loading="loading"
-          :items="storeId"
-          class="mx-4"
-          density="comfortable"
-          hide-no-data
-          hide-details
+          
+          density="compact"
+          variant="solo"
           label="환자명 입력"
-          style="max-width: 300px;"
-          return-object
-        ></v-autocomplete>
+          style="max-width: 350px;"
+          append-inner-icon="mdi-magnify"
+          single-line
+          hide-details
+          @click:append-inner="search()"
+          ></v-text-field>
+          
         </v-col>
       </v-row>
       <v-row v-else>
@@ -96,6 +96,33 @@
     </v-app-bar>
     <v-main>
       <v-container>
+        <v-dialog v-model="select_dialog" persistent max-width="600px" > 
+          <v-card>
+              <v-card-title> 
+                  <span class="text-h5">예약된 환자 날짜 선택</span> 
+              </v-card-title> 
+              <v-card-text> 
+                  <v-container>
+                    
+                      <v-row 
+                      v-for="(id,i) in storeId" :key="i" 
+                     
+                      class="mb-6" no-gutters >
+                          <v-col>
+                              
+                                  {{ id }}
+                            <v-btn @click="setDate(id)">선택</v-btn>
+                          </v-col> 
+                      </v-row>
+                      
+                  </v-container>
+              </v-card-text> 
+              <v-card-actions> 
+                  <v-spacer></v-spacer>
+                  <v-btn color="blue darken-1" text @click="select_dialog = false" > 닫기 </v-btn> 
+              </v-card-actions> 
+          </v-card> 
+      </v-dialog>
         <Nuxt />
       </v-container>
     </v-main>
@@ -146,14 +173,14 @@ export default {
       nameSearch: null,
       autosearch:null,
       loading:false,
+      loaded: false,
+      select_dialog:false,
       storeId:[]
     }
   },
   
   watch: {
-    autosearch (val) {
-        val && val !== this.nameSearch && this.search(val)
-      },
+   
     picker() {
       this.$store.state.loadDate = this.picker;
     }
@@ -185,9 +212,8 @@ export default {
   },
 
   methods: {
-    search(v) {
-      this.loading = true;
-      setTimeout(async () => {
+    async search() {
+        this.storeId=[];
         const q = query(collection(this.$db, "reservate"));
         const querySnapshot = await getDocs(q);
         let count = 0;
@@ -197,26 +223,25 @@ export default {
           const getData = docs.data();
           
           for (const key in getData) {
-            if(getData[key].name === v){
+            if(getData[key].name === this.nameSearch){
               count = count+1;
               this.storeId.push(docs.id);
             }
           }
           
         });
-         
-        this.loading = false
-      }, 500)
-      
-      
-        // eslint-disable-next-line spaced-comment
-        //this.$store.state.loadDate = this.storeId[0];
-        // eslint-disable-next-line spaced-comment
-        //this.$store.state.searchName = this.nameSearch;
-      
+        if(count === 1){
+          this.setDate(this.storeId[0]);
+        }else if(count >= 1){
+          this.select_dialog = true;
+        }
 
     },
-
+    setDate(date){
+      this.select_dialog = false;
+      this.$store.state.loadDate = date;
+      this.$store.state.searchName = this.nameSearch;
+    },
     login(){
       signInWithEmailAndPassword(this.$auth, this.email, this.password)
       .then((userCredential) => {
