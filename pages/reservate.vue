@@ -33,9 +33,17 @@
                 <v-container>
                   <v-row>
                     <v-col cols="16" sm="2" md="2">
-                      <v-text-field
+                      <!--v-text-field
                         v-model="editedItem.time" label="예약시간"
-                        pattern="^([0-1]?[0-9]|2[0-4]):([0-5][0-9])(:[0-5][0-9])?$" type="time"></v-text-field>
+                        pattern="^([0-1]?[0-9]|2[0-4]):([0-5][0-9])(:[0-5][0-9])?$" type="time">
+                      </v-text-field -->
+                      <v-text-field
+                        v-model="editedItem.time" 
+                        label="예약시간"
+                        maxlength="5"
+                        type="time"
+                        oninput="javascript: this.value = this.value.replace(/[^0-9]/, '').replace(/^(\d{2})(\d{2})$/, `$1:$2`);">
+                      </v-text-field>
                     </v-col>
                     <v-col cols="16" sm="2" md="2">
                       <v-text-field v-model="editedItem.name" label="예약자성함"></v-text-field>
@@ -717,9 +725,11 @@ export default {
     },
 
     async save() {
-      const sDate = this.getDate;
-      const reservateData = this.editedItem.time;
       
+      const sDate = this.getDate;
+      // eslint-disable-next-line no-unused-vars
+      const reservateData = this.editedItem.time;
+      alert(this.editedItem);
       await setDoc(doc(this.$db, "reservate", sDate), {
         [reservateData]: {
           time: this.editedItem.time,
